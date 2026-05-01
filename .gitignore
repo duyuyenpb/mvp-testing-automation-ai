@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+
+.env
+.env.local
+*.log
+.DS_Store
+
+# Pytest / Playwright artifacts
+.pytest_cache/
+test-results/
+playwright-report/
+playwright/.cache/
+
+# Generated artifacts (kept out of git during dev; flip later if you want them tracked)
+tests/specs/_generated/
+test-plans/_generated/
+
+# IDE
+.vscode/
+.idea/

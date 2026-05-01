@@ -1,0 +1,43 @@
+[project]
+name = "qaforge"
+version = "0.1.0a0"
+description = "AI-driven test automation framework. Plan → Generate → Run → Heal."
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Duy Uyen" }]
+dependencies = [
+  "anthropic>=0.39.0",
+  "click>=8.1.7",
+  "python-dotenv>=1.0.1",
+  "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.3.0",
+  "pytest-playwright>=0.5.2",
+  "playwright>=1.48.0",
+]
+
+[project.scripts]
+qaforge = "qaforge.cli:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["qaforge"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra --strict-markers"
+markers = [
+  "smoke: fast offline sanity tests",
+  "ui: tests that drive a real browser",
+]
