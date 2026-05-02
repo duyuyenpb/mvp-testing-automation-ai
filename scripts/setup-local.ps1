@@ -38,7 +38,13 @@ raise SystemExit(0 if sys.version_info >= (3, 10) else 1)
         }
     }
 
-    Write-Host @"
+    return $null
+}
+
+function Use-WorkspaceUv {
+    $uv = Get-Command uv -ErrorAction SilentlyContinue
+    if (-not $uv) {
+        Write-Host @"
 Python 3.10+ was not found.
 
 Install Python from:
@@ -50,7 +56,14 @@ During install, check:
 Then open a new PowerShell window and run:
   .\scripts\setup-local.ps1
 "@ -ForegroundColor Red
-    exit 1
+        exit 1
+    }
+
+    $env:UV_CACHE_DIR = Join-Path $repoRoot ".uv-cache"
+    $env:UV_PYTHON_INSTALL_DIR = Join-Path $repoRoot ".uv-python"
+
+    Write-Host "Python 3.10+ was not found; using uv-managed Python 3.11." -ForegroundColor Yellow
+    return @{ Command = "uv"; Args = @("run", "--python", "3.11", "python") }
 }
 
 function Invoke-BasePython {
@@ -64,8 +77,17 @@ function Invoke-BasePython {
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $repoRoot
 
+$workspaceTemp = Join-Path $repoRoot ".tmp"
+New-Item -ItemType Directory -Force $workspaceTemp | Out-Null
+$env:TMP = $workspaceTemp
+$env:TEMP = $workspaceTemp
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $repoRoot ".playwright-browsers"
+
 Write-Step "Finding Python 3.10+"
 $python = Find-Python
+if (-not $python) {
+    $python = Use-WorkspaceUv
+}
 Invoke-BasePython -Python $python -Arguments @("--version")
 
 $venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
@@ -80,12 +102,22 @@ else {
     else {
         Write-Step "Creating virtual environment"
     }
-    Invoke-BasePython -Python $python -Arguments @("-m", "venv", ".venv")
+    if ($python.Command -eq "uv") {
+        & uv venv ".venv" --python "3.11"
+    }
+    else {
+        Invoke-BasePython -Python $python -Arguments @("-m", "venv", ".venv")
+    }
 }
 
 Write-Step "Installing QAForge and test dependencies"
-& $venvPython -m pip install --upgrade pip
-& $venvPython -m pip install -e ".[test]"
+if ($python.Command -eq "uv") {
+    & uv pip install --python $venvPython -e ".[test]"
+}
+else {
+    & $venvPython -m pip install --upgrade pip
+    & $venvPython -m pip install -e ".[test]"
+}
 
 if (-not $SkipBrowserInstall) {
     Write-Step "Installing Playwright Chromium"
@@ -105,7 +137,7 @@ else {
 }
 
 Write-Step "Running offline smoke verification"
-& $venvPython -m pytest -m smoke -q
+& $venvPython -m pytest -m smoke -q --basetemp=".tmp\pytest-smoke"
 & $venvPython -m qaforge skills
 
 Write-Host ""

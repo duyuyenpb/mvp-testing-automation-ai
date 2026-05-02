@@ -32,6 +32,17 @@ console = Console()
 err = Console(stderr=True)
 
 
+def _configure_console_encoding() -> None:
+    """Prefer UTF-8 output on Windows consoles that default to cp1252."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is not None:
+            reconfigure(encoding="utf-8", errors="replace")
+
+
+_configure_console_encoding()
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.version_option(__version__, prog_name="qaforge")
 def main() -> None:
@@ -249,6 +260,11 @@ def run(paths: tuple[str, ...], show_failures: bool) -> None:
         err.print(f"[green][run] {summary}[/green]")
     else:
         err.print(f"[yellow][run] {summary}[/yellow]")
+
+    if result.report_path:
+        report = result.report_path
+        label = report.relative_to(PROJECT_ROOT) if report.is_relative_to(PROJECT_ROOT) else report
+        err.print(f"[cyan][run] HTML report → {label}[/cyan]")
 
     if result.failures and show_failures:
         err.print("")

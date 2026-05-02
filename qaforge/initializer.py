@@ -69,6 +69,8 @@ qaforge run
 qaforge heal
 ```
 
+`qaforge run` writes an HTML report to `test-results/qaforge-report.html`.
+
 See `knowledge.md` and `skills/` for project rules — edit them to match
 your app, then `qaforge plan/generate` will follow your conventions.
 """

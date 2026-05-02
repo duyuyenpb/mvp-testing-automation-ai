@@ -8,7 +8,7 @@ First public alpha. The full **plan → generate → run → heal** loop works e
 
 - **`qaforge plan "<feature>"`** — Claude turns a plain-English description into a Markdown test plan (TC-001, TC-002, ...) with happy paths, negatives, edge cases, and a UI/API/Hybrid label per case. Interactive y/n/edit approval, or `--auto` to skip the prompt. Reads from `--file requirements.txt` for longer specs.
 - **`qaforge generate --plan <file>`** — Claude reads the plan + the `write-test` SKILL + the gold-standard saucedemo examples, then emits one spec at `tests/specs/test_<slug>.py` plus any new page objects under `tests/pages/`. Validates paths (regex), `python -m py_compile`s every file (1 retry on syntax errors), then runs `pytest --collect-only` + the spec once. Strict path validation — Claude can never write outside `tests/`.
-- **`qaforge run [paths...]`** — Wraps `pytest --junit-xml`, parses results into a structured `RunResult`. Prints `N passed, M failed in T s` plus per-failure brief. Detects environmental issues (missing Playwright browser, missing `anthropic` package) and emits an actionable hint.
+- **`qaforge run [paths...]`** — Wraps `pytest --junit-xml`, parses results into a structured `RunResult`. Prints `N passed, M failed in T s` plus per-failure brief, and writes `test-results/qaforge-report.html`. Detects environmental issues (missing Playwright browser, missing `anthropic` package) and emits an actionable hint.
 - **`qaforge heal [--auto] [--max-attempts N]`** — Reads the first failure, sends Claude the full spec + every page object the spec imports + the traceback. Claude returns a JSON patch (using the `heal-test` SKILL). Default flow shows a unified diff and asks before applying; `--auto` skips the prompt. Loops until green or attempts exhausted. Returns `{"files": []}` when the failure is a real bug instead of inverting the assertion.
 - **`qaforge init <dir>`** — Scaffolds a fresh project: `knowledge.md`, all 3 SKILLs, templates, `conftest.py`, `.env.example`, gold-standard tests, `.github/workflows/test.yml`, `.gitignore`, `README.md`. Skips existing files unless `--force`.
 
@@ -30,7 +30,7 @@ First public alpha. The full **plan → generate → run → heal** loop works e
 - No multi-LLM (OpenAI / Gemini) — `qaforge/llm.py` is single-provider on purpose.
 - No visual regression (`toHaveScreenshot()`).
 - No Swagger/OpenAPI import.
-- No HTML report dashboard — terminal output only.
+- HTML reporting is intentionally simple: one self-contained latest-run report at `test-results/qaforge-report.html`.
 - No npm publish — install with `pip install -e '.[test]'` from the repo.
 - Generated tests pass-rate against saucedemo: target ≥50% on first run, expect ~70% after 1 heal pass.
 

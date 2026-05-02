@@ -21,7 +21,7 @@ The main difference is language/runtime: the plan's architecture diagram is Type
 |---|---:|---|
 | CLI command: `plan` | Done | Supports inline descriptions, `--file`, `--auto`, and approval/edit flow. |
 | CLI command: `generate` | Done | Writes one spec plus page objects, validates paths, compiles, retries once, and can first-run pytest. |
-| CLI command: `run` | Done | Wraps pytest, parses JUnit XML, and prints pass/fail summaries. |
+| CLI command: `run` | Done | Wraps pytest, parses JUnit XML, prints pass/fail summaries, and writes an HTML report. |
 | CLI command: `heal` | Done | Reads failures, asks Claude for minimal JSON patches, shows diffs, applies, and reruns. |
 | Single LLM provider: Claude | Done | `qaforge/llm.py` is Anthropic-only. |
 | Playwright + Python | Done | Uses `pytest-playwright` and synchronous Playwright API. |
@@ -35,7 +35,7 @@ The main difference is language/runtime: the plan's architecture diagram is Type
 | Generated plans folder | Fixed | Added `test-plans/.gitkeep` so the documented output folder exists after clone. |
 | GitHub Actions template | Done | `.github/workflows/test.yml` exists. |
 | README + Getting Started | Done | Both exist; Windows setup notes were added. |
-| Basic terminal output | Done | Uses `click` and `rich`; no dashboard. |
+| Basic terminal output | Done | Uses `click` and `rich`; latest-run HTML report is written to `test-results/qaforge-report.html`. |
 
 ## Gaps / Risks To Finish MVP Validation
 

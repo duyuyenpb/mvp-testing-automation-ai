@@ -13,6 +13,12 @@ function Write-Step {
 $repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $repoRoot
 
+$workspaceTemp = Join-Path $repoRoot ".tmp"
+New-Item -ItemType Directory -Force $workspaceTemp | Out-Null
+$env:TMP = $workspaceTemp
+$env:TEMP = $workspaceTemp
+$env:PLAYWRIGHT_BROWSERS_PATH = Join-Path $repoRoot ".playwright-browsers"
+
 $venvPython = Join-Path $repoRoot ".venv\Scripts\python.exe"
 if (Test-Path $venvPython) {
     $python = $venvPython
@@ -33,14 +39,14 @@ Write-Step "QAForge import check"
 
 Write-Step "Skill/context check"
 & $python -m qaforge skills
-& $python -m qaforge context test-design | Out-Null
+& $python -m qaforge context test-design *> $null
 
 Write-Step "Offline smoke tests"
-& $python -m pytest -m smoke -q
+& $python -m pytest -m smoke -q --basetemp=".tmp\pytest-smoke"
 
 if ($Full) {
     Write-Step "Full pytest run"
-    & $python -m pytest -q
+    & $python -m pytest -q --basetemp=".tmp\pytest-full"
 
     Write-Step "QAForge runner"
     & $python -m qaforge run

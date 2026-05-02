@@ -13,7 +13,7 @@ QAForge turns plain-English feature descriptions into runnable Playwright + Pyth
 |---|---|
 | `qaforge plan "<feature>"` | Generates a Markdown test plan and asks for approval |
 | `qaforge generate --plan <file>` | Generates `test_*.py` + page objects, py_compile-checks (1 retry), runs pytest once |
-| `qaforge run [paths...]` | Runs pytest, parses JUnit XML, prints structured pass/fail summary |
+| `qaforge run [paths...]` | Runs pytest, parses JUnit XML, prints structured pass/fail summary, writes an HTML report |
 | `qaforge heal [--auto] [--max-attempts N]` | Reads failures, asks Claude for fixes, shows diff, re-runs |
 | `qaforge init <dir>` | Scaffolds a new project (knowledge.md, skills/, tests/, CI workflow) |
 
@@ -64,7 +64,7 @@ flowchart LR
 
 1. `qaforge plan "<feature>"` loads `knowledge.md` and `skills/test-design/SKILL.md`, asks Claude for a Markdown test plan, then saves it under `test-plans/`.
 2. `qaforge generate --plan <file>` loads `skills/write-test/SKILL.md`, sends the approved plan and existing Page Object list to Claude, writes only allowed files under `tests/specs/` and `tests/pages/`, then runs `py_compile` and an optional first-run pytest check.
-3. `qaforge run` executes pytest through `runner.py`, captures JUnit XML, and prints a concise terminal summary.
+3. `qaforge run` executes pytest through `runner.py`, captures JUnit XML, prints a concise terminal summary, and writes `test-results/qaforge-report.html`.
 4. `qaforge heal` sends the failing spec, imported Page Objects, and traceback to Claude using `skills/heal-test/SKILL.md`; it validates the returned JSON patch, shows a diff unless `--auto` is used, applies the patch, and reruns.
 
 ### Design Constraints

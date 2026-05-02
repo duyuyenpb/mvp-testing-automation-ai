@@ -97,6 +97,7 @@ qaforge run tests/specs/test_user_login.py  # one file
 ```
 
 You'll get a summary like `3 passed, 1 failed in 12.4s` and a brief per-failure dump.
+QAForge also writes an HTML report to `test-results/qaforge-report.html` after each run.
 
 ## 6. Heal failures automatically
 
@@ -243,6 +244,7 @@ Start with a small, stable workflow such as login or account creation. Then add 
 |---|---|
 | `ANTHROPIC_API_KEY is missing` | `.env` — see step 2 |
 | `Executable doesn't exist` (Playwright) | Run `playwright install chromium` |
+| No HTML report after `qaforge run` | Check `test-results/qaforge-report.html`; the folder is gitignored |
 | Generated test doesn't compile | `skills/write-test/SKILL.md` — add a "NEVER do this" example |
 | Generated test compiles but fails on first run | Same SKILL — make the locator pattern more explicit |
 | Healer loop won't fix a failure | Check the diff — if Claude returns `{"files": []}`, it thinks it's a real bug |

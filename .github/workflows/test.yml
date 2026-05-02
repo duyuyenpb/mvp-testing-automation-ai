@@ -31,16 +31,17 @@ jobs:
       - name: Smoke tests (offline)
         run: pytest -m smoke
 
-      - name: UI tests (saucedemo)
+      - name: QAForge run with HTML report
         env:
           BASE_URL: https://www.saucedemo.com
-        run: pytest -m ui --tb=short
+        run: python -m qaforge run
         continue-on-error: true
 
-      - name: Upload Playwright traces on failure
-        if: failure()
+      - name: Upload test reports and traces
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
+          name: qaforge-test-results
           path: test-results/
+          if-no-files-found: ignore
           retention-days: 7

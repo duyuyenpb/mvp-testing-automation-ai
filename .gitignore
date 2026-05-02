@@ -7,6 +7,10 @@ dist/
 *.egg-info/
 .venv/
 venv/
+.uv-cache/
+.uv-python/
+.tmp/
+.playwright-browsers/
 
 .env
 .env.local
@@ -15,6 +19,7 @@ venv/
 
 # Pytest / Playwright artifacts
 .pytest_cache/
+pytest-cache-files-*/
 test-results/
 playwright-report/
 playwright/.cache/
