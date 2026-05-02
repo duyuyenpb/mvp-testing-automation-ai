@@ -4,12 +4,32 @@ Zero → first healed test in ~10 minutes.
 
 ## 1. Install (2 min)
 
+Install Python 3.10+ first. On Windows, install Python from https://www.python.org/downloads/windows/ and check **Add python.exe to PATH**.
+
+macOS / Linux:
+
 ```bash
 git clone https://github.com/duyuyenpb/mvp-testing-automation-ai.git
 cd mvp-testing-automation-ai
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[test]'
 playwright install chromium
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/duyuyenpb/mvp-testing-automation-ai.git
+cd mvp-testing-automation-ai
+.\scripts\setup-local.ps1
+.\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks the script, run this once in the repo shell:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\setup-local.ps1
 ```
 
 ## 2. Add your Claude API key (1 min)
@@ -32,6 +52,12 @@ qaforge ask "where do generated tests live?"
 ```
 
 If you see `tests/specs/` in the answer, you're ready. If you see `ANTHROPIC_API_KEY is missing`, re-check step 2.
+
+For a no-API-key local check, run:
+
+```powershell
+.\scripts\verify-local.ps1
+```
 
 ## 3. Plan your first test (1 min)
 

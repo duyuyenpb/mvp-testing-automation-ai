@@ -1,9 +1,8 @@
 """
 QAForge CLI entry point (click).
 
-Week 1: `context`, `skills`, `ask`, `integration`.
-Week 2: `plan`.
-Week 3-5 commands are stubs.
+Includes the MVP flow commands: `plan`, `generate`, `run`, and `heal`,
+plus `init` for Week 6 scaffolding and a few diagnostic helpers.
 """
 from __future__ import annotations
 
@@ -172,7 +171,7 @@ def plan(
             sys.exit(1)
 
 
-# ----------------------- Stubs for weeks 3-5 -----------------------
+# ----------------------- Week 3-5: generate / run / heal -----------------------
 
 
 @main.command()
