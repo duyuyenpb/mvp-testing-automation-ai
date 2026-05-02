@@ -43,13 +43,24 @@ def _get_client():
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         print(
-            "[llm] ANTHROPIC_API_KEY is missing. Copy .env.example to .env and set the key.",
+            "[qaforge] ANTHROPIC_API_KEY is missing.\n"
+            "  1. cp .env.example .env\n"
+            "  2. Open .env and paste your key from "
+            "https://console.anthropic.com/settings/keys\n"
+            "  3. Re-run the command.",
             file=sys.stderr,
         )
         sys.exit(1)
 
-    # Imported lazily so other CLI commands don't pay the import cost.
-    from anthropic import Anthropic
+    try:
+        from anthropic import Anthropic
+    except ImportError:
+        print(
+            "[qaforge] The `anthropic` package is not installed.\n"
+            "  Run: pip install -e '.[test]'  (or: pip install anthropic)",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     _client = Anthropic(api_key=api_key)
     return _client

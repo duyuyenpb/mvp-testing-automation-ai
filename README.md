@@ -4,7 +4,8 @@
 
 QAForge turns plain-English feature descriptions into runnable Playwright + Python tests, runs them, and auto-heals broken locators using Claude.
 
-> **Status:** pre-alpha (Week 4 of 6 — `plan` and `generate` shipped; `run`, `heal` are stubs).
+> **Status:** alpha — all 4 MVP commands shipped (Week 6).
+> Full setup walk-through: [GETTING-STARTED.md](GETTING-STARTED.md).
 
 ## What's in MVP
 
@@ -12,8 +13,9 @@ QAForge turns plain-English feature descriptions into runnable Playwright + Pyth
 |---|---|
 | `qaforge plan "<feature>"` | Generates a Markdown test plan and asks for approval |
 | `qaforge generate --plan <file>` | Generates `test_*.py` + page objects, py_compile-checks (1 retry), runs pytest once |
-| `qaforge run` | Runs Pytest + Playwright, captures structured results *(week 5)* |
-| `qaforge heal` | Reads failures, asks Claude for fixes, re-runs *(week 5)* |
+| `qaforge run [paths...]` | Runs pytest, parses JUnit XML, prints structured pass/fail summary |
+| `qaforge heal [--auto] [--max-attempts N]` | Reads failures, asks Claude for fixes, shows diff, re-runs |
+| `qaforge init <dir>` | Scaffolds a new project (knowledge.md, skills/, tests/, CI workflow) |
 
 Locked-in tech: **Playwright + Python (pytest-playwright)**, **Claude (Sonnet 4.6)**, target app **https://www.saucedemo.com**.
 

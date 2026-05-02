@@ -20,9 +20,12 @@ from rich.panel import Panel
 from qaforge import __version__
 from qaforge.context import PROJECT_ROOT, build_system_prompt, list_skills
 from qaforge.generator import GenerateResult, generate_from_plan
+from qaforge.healer import format_failure_brief, heal as run_heal
+from qaforge.initializer import init_project
 from qaforge.integration import run as integration_run
 from qaforge.llm import ask_claude
 from qaforge.planner import PlanResult, plan_feature, save_plan, slugify
+from qaforge.runner import diagnose_environment, format_summary, run_tests
 
 load_dotenv()
 
@@ -230,17 +233,125 @@ def generate(plan_path: Path, no_run: bool, no_retry: bool) -> None:
 
 
 @main.command()
-def run() -> None:
-    """[week 5] Run pytest, capture results."""
-    err.print("[red][run] not implemented yet — coming in Week 5.[/red]")
-    sys.exit(2)
+@click.argument("paths", nargs=-1, type=click.Path())
+@click.option(
+    "--show-failures/--hide-failures",
+    default=True,
+    help="Print full traceback for each failure.",
+)
+def run(paths: tuple[str, ...], show_failures: bool) -> None:
+    """Run pytest on tests/specs/ (or PATHS) and print a structured summary."""
+    target_paths = list(paths) if paths else None
+    err.print("[dim][run] launching pytest…[/dim]")
+    result = run_tests(target_paths)
+
+    summary = format_summary(result)
+    if result.all_passed:
+        err.print(f"[green][run] {summary}[/green]")
+    else:
+        err.print(f"[yellow][run] {summary}[/yellow]")
+
+    if result.failures and show_failures:
+        err.print("")
+        for f in result.failures:
+            console.print(f"  [red]{format_failure_brief(f)}[/red]")
+            tb = f.traceback.strip()
+            if tb:
+                console.print(f"    [dim]{tb.splitlines()[-1][:200]}[/dim]")
+
+    hint = diagnose_environment(result)
+    if hint:
+        err.print(f"\n[yellow][run] hint: {hint}[/yellow]")
+
+    sys.exit(0 if result.all_passed else 1)
 
 
 @main.command()
-def heal() -> None:
-    """[week 5] Read failures, fix locators, re-run."""
-    err.print("[red][heal] not implemented yet — coming in Week 5.[/red]")
-    sys.exit(2)
+@click.argument("paths", nargs=-1, type=click.Path())
+@click.option("--auto", is_flag=True, help="Apply patches without asking.")
+@click.option(
+    "--max-attempts",
+    type=int,
+    default=3,
+    show_default=True,
+    help="Maximum heal attempts before giving up.",
+)
+def heal(paths: tuple[str, ...], auto: bool, max_attempts: int) -> None:
+    """Run pytest, then ask Claude to heal failing tests (locator fixes, etc.)."""
+    target_paths = list(paths) if paths else None
+    err.print("[dim][heal] running tests first…[/dim]")
+    initial = run_tests(target_paths)
+
+    if initial.all_passed:
+        err.print(f"[green][heal] {format_summary(initial)} — nothing to heal.[/green]")
+        sys.exit(0)
+
+    err.print(f"[yellow][heal] initial: {format_summary(initial)}[/yellow]")
+    for f in initial.failures:
+        console.print(f"  [red]{format_failure_brief(f)}[/red]")
+
+    def _confirm(path: str, diff: str) -> bool:
+        console.print(f"\n[bold]Proposed patch for {path}:[/bold]")
+        console.print(diff or "(no textual change)", style="white", markup=False)
+        answer = click.prompt(
+            "Apply this patch? [y]es / [n]o", default="y", show_default=True
+        ).strip().lower()
+        return answer in ("y", "yes")
+
+    result = run_heal(
+        initial,
+        max_attempts=max_attempts,
+        auto=auto,
+        confirm=None if auto else _confirm,
+    )
+
+    err.print("")
+    err.print(
+        f"[dim][heal] attempts={len(result.attempts)} healed={result.healed_count} "
+        f"remaining={result.remaining_failures}[/dim]"
+    )
+    total_in = sum(a.input_tokens for a in result.attempts)
+    total_out = sum(a.output_tokens for a in result.attempts)
+    if total_in or total_out:
+        err.print(f"[dim][heal] tokens: in={total_in} out={total_out} model={result.model}[/dim]")
+
+    for a in result.attempts:
+        status = "applied" if a.applied else f"skipped ({a.skipped_reason})"
+        err.print(f"  attempt {a.attempt}: {status} — {a.failure.name}")
+
+    if result.succeeded:
+        err.print(f"[green][heal] PASSED after healing.[/green]")
+        sys.exit(0)
+
+    err.print("[red][heal] still failing — manual inspection needed.[/red]")
+    sys.exit(1)
+
+
+# ----------------------- Week 6: init -----------------------
+
+
+@main.command()
+@click.argument(
+    "target",
+    type=click.Path(file_okay=False, path_type=Path),
+    default=Path("."),
+)
+@click.option("--name", default="my-test-project", help="Project name written into README.md.")
+@click.option("--force", is_flag=True, help="Overwrite existing files.")
+def init(target: Path, name: str, force: bool) -> None:
+    """Scaffold a new QAForge project (knowledge.md, skills/, tests/, CI)."""
+    err.print(f"[dim][init] scaffolding into {target}…[/dim]")
+    result = init_project(target, name=name, force=force)
+
+    for w in result.written:
+        console.print(f"  [green]+[/green] {w}")
+    for s in result.skipped:
+        console.print(f"  [yellow]·[/yellow] {s} (exists; use --force to overwrite)")
+
+    err.print("")
+    err.print(f"[green][init] {len(result.written)} files written, "
+              f"{len(result.skipped)} skipped.[/green]")
+    err.print("[dim]next: cp .env.example .env  →  add ANTHROPIC_API_KEY  →  qaforge plan \"...\"[/dim]")
 
 
 # ----------------------- helpers -----------------------
