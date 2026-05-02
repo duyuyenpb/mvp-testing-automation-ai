@@ -1,7 +1,7 @@
 """
 Test code generator — Week 3-4.
 
-Takes a Markdown test plan, asks Claude (with the `write-test` SKILL +
+Takes a Markdown test plan, asks the configured LLM (with the `write-test` SKILL +
 gold-standard reference code) to produce one spec file plus any new Page
 Objects, validates them with `python -m py_compile`, optionally runs a
 single first-run check via pytest.
@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Optional
 
 from qaforge.context import PROJECT_ROOT, build_system_prompt
-from qaforge.llm import ask_claude
+from qaforge.llm import ask_llm
 
 ALLOWED_PREFIXES = ("tests/specs/", "tests/pages/")
 SPEC_FILE_RE = re.compile(r"^tests/specs/test_[a-z0-9_]+\.py$")
@@ -80,7 +80,7 @@ def generate_from_plan(
 
     while attempts < max_attempts:
         attempts += 1
-        result = ask_claude(
+        result = ask_llm(
             user=last_user,
             system=system,
             model=model,

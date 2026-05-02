@@ -1,6 +1,6 @@
 """
 Context loader. Reads knowledge.md + the requested SKILL.md files from disk
-and concatenates them into a system prompt that QAForge sends to Claude.
+and concatenates them into a system prompt that QAForge sends to the configured LLM.
 
 Usage:
     from qaforge.context import build_system_prompt, list_skills
@@ -44,7 +44,7 @@ def _resolve_skill_paths(skill_names: Optional[Iterable[str]]) -> list[Path]:
 def build_system_prompt(skill_names: Optional[Iterable[str]] = None) -> str:
     """
     Build the system prompt: knowledge.md first (authoritative), then each skill.
-    Each section is wrapped in clear delimiters so Claude can parse them.
+    Each section is wrapped in clear delimiters so the configured LLM can parse them.
     """
     if not KNOWLEDGE_PATH.is_file():
         raise FileNotFoundError(f"knowledge.md is missing at {KNOWLEDGE_PATH}")

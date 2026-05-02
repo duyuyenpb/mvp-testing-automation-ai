@@ -32,16 +32,32 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\scripts\setup-local.ps1
 ```
 
-## 2. Add your Claude API key (1 min)
+## 2. Configure your LLM provider (1 min)
 
 ```bash
 cp .env.example .env
 ```
 
-Open `.env` and paste your key (get one at https://console.anthropic.com/settings/keys):
+Open `.env` and choose your provider, model, and API key. For Codex/OpenAI:
 
 ```
+QAFORGE_LLM_PROVIDER=codex
+QAFORGE_MODEL=gpt-5.2-codex
+OPENAI_API_KEY=sk-...
+```
+
+Other supported providers:
+
+```text
+QAFORGE_LLM_PROVIDER=anthropic
+QAFORGE_MODEL=claude-sonnet-4-6
 ANTHROPIC_API_KEY=sk-ant-...
+```
+
+```text
+QAFORGE_LLM_PROVIDER=gemini
+QAFORGE_MODEL=gemini-2.5-pro
+GEMINI_API_KEY=...
 ```
 
 Verify the wiring:
@@ -51,7 +67,7 @@ qaforge skills
 qaforge ask "where do generated tests live?"
 ```
 
-If you see `tests/specs/` in the answer, you're ready. If you see `ANTHROPIC_API_KEY is missing`, re-check step 2.
+If you see `tests/specs/` in the answer, you're ready. If you see a missing-key message, re-check step 2.
 
 For a no-API-key local check, run:
 
@@ -66,7 +82,7 @@ qaforge plan "User login with email and password"
 ```
 
 QAForge will:
-1. Send your description + the `test-design` SKILL to Claude
+1. Send your description + the `test-design` SKILL to the configured LLM
 2. Print a Markdown test plan with TC-001, TC-002, ...
 3. Ask: **Approve? [y]es / [n]o / [e]dit**
 
@@ -81,7 +97,7 @@ qaforge generate --plan test-plans/001-user-login.md
 ```
 
 What happens:
-1. Claude reads the plan + the `write-test` SKILL + the gold-standard examples in `tests/`
+1. The configured LLM reads the plan + the `write-test` SKILL + the gold-standard examples in `tests/`
 2. Emits one spec at `tests/specs/test_user_login.py` and any new page objects under `tests/pages/`
 3. Runs `python -m py_compile` on every file (1 retry on syntax errors)
 4. Runs `pytest --collect-only` then `pytest <spec>` once
@@ -107,14 +123,14 @@ qaforge heal --auto       # unattended; max 3 attempts
 qaforge heal --max-attempts 5
 ```
 
-QAForge picks the first failing test, sends Claude:
+QAForge picks the first failing test, sends the configured LLM:
 - The full spec source
 - Every page object the spec imports
 - The pytest traceback
 
-Claude emits a JSON patch (using `skills/heal-test/SKILL.md`). You review the diff, type `y` to apply, and it re-runs. Repeats until green or attempts exhausted.
+The configured LLM emits a JSON patch (using `skills/heal-test/SKILL.md`). You review the diff, type `y` to apply, and it re-runs. Repeats until green or attempts exhausted.
 
-If the failure is a real bug (assertion mismatch on real data), Claude returns `{"files": []}` and the loop stops — your test caught a regression, fix the app.
+If the failure is a real bug (assertion mismatch on real data), the LLM returns `{"files": []}` and the loop stops — your test caught a regression, fix the app.
 
 ## 7. Scaffold a new project
 
@@ -144,7 +160,9 @@ Copy-Item .env.example .env
 Set:
 
 ```text
-ANTHROPIC_API_KEY=sk-ant-...
+QAFORGE_LLM_PROVIDER=codex
+QAFORGE_MODEL=gpt-5.2-codex
+OPENAI_API_KEY=sk-...
 BASE_URL=https://your-product.example.com
 ```
 
@@ -232,7 +250,7 @@ Start with a small, stable workflow such as login or account creation. Then add 
 ### Recommended first product checklist
 
 - Your app is reachable from the machine running tests.
-- `.env` has `ANTHROPIC_API_KEY` and `BASE_URL`.
+- `.env` has `QAFORGE_LLM_PROVIDER`, `QAFORGE_MODEL`, the matching API key, and `BASE_URL`.
 - Test credentials are available through environment variables or fixtures.
 - `knowledge.md` describes your app, users, data, and selector conventions.
 - At least one gold-standard spec and Page Object match your app.
@@ -242,17 +260,17 @@ Start with a small, stable workflow such as login or account creation. Then add 
 
 | Symptom | First place to look |
 |---|---|
-| `ANTHROPIC_API_KEY is missing` | `.env` — see step 2 |
+| Missing API key | `.env` — see step 2 and configure the key for your selected provider |
 | `Executable doesn't exist` (Playwright) | Run `playwright install chromium` |
 | No HTML report after `qaforge run` | Check `test-results/qaforge-report.html`; the folder is gitignored |
 | Generated test doesn't compile | `skills/write-test/SKILL.md` — add a "NEVER do this" example |
 | Generated test compiles but fails on first run | Same SKILL — make the locator pattern more explicit |
-| Healer loop won't fix a failure | Check the diff — if Claude returns `{"files": []}`, it thinks it's a real bug |
+| Healer loop won't fix a failure | Check the diff — if the LLM returns `{"files": []}`, it thinks it's a real bug |
 | Plans miss edge cases | `skills/test-design/SKILL.md` — the most important file you'll edit |
 
 ## What's in MVP vs not
 
-✅ MVP: `plan`, `generate`, `run`, `heal`, `init`, GitHub Actions template
-❌ Out of scope (v0.2+): visual regression, multi-LLM, npm publish, OpenAPI import, dashboards, mobile, accessibility
+✅ MVP: `plan`, `generate`, `run`, `heal`, `init`, configurable LLM provider, GitHub Actions template
+❌ Out of scope (v0.2+): visual regression, npm publish, OpenAPI import, dashboards, mobile, accessibility
 
 See [README.md](README.md) for the full table.

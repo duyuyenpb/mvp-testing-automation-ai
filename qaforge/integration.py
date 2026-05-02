@@ -1,5 +1,5 @@
 """
-Week 1 end-to-end smoke test: combine context.py + llm.py and verify Claude
+Week 1 end-to-end smoke test: combine context.py + llm.py and verify the configured LLM
 answers questions with project-aware context (mentions QAForge folder layout
 and Python locator strategy).
 """
@@ -8,7 +8,7 @@ from __future__ import annotations
 import sys
 
 from qaforge.context import build_system_prompt
-from qaforge.llm import ask_claude
+from qaforge.llm import ask_llm
 
 DEFAULT_QUESTION = (
     "In one short paragraph: where do generated test specs and Page Objects "
@@ -23,10 +23,10 @@ def run(question: str | None = None) -> int:
     system = build_system_prompt()
     print(f"[integration] system prompt: {len(system)} chars", file=sys.stderr)
 
-    print("[integration] asking Claude…", file=sys.stderr)
-    result = ask_claude(system=system, user=user_question)
+    print("[integration] asking configured LLM…", file=sys.stderr)
+    result = ask_llm(system=system, user=user_question)
 
-    print("\n--- Claude says ---\n")
+    print("\n--- LLM says ---\n")
     print(result.text)
     print("\n-------------------\n")
 

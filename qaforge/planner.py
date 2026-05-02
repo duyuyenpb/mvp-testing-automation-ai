@@ -5,7 +5,7 @@ Turns a free-form feature description into a Markdown test plan that follows
 the format defined in skills/test-design/SKILL.md.
 
 Public API:
-    plan_feature(description) -> PlanResult        # ask Claude, return markdown
+    plan_feature(description) -> PlanResult        # ask configured LLM, return markdown
     save_plan(markdown, slug, root) -> Path        # write to test-plans/NNN-slug.md
     next_counter(test_plans_dir) -> int            # 3-digit auto-increment
     slugify(text) -> str                           # filesystem-safe slug
@@ -18,11 +18,11 @@ from pathlib import Path
 from typing import Optional
 
 from qaforge.context import PROJECT_ROOT, build_system_prompt
-from qaforge.llm import ask_claude
+from qaforge.llm import ask_llm
 
 TEST_PLANS_DIR = PROJECT_ROOT / "test-plans"
 
-# Strip any opening/closing ``` fences if Claude ignored the rule about raw markdown.
+# Strip any opening/closing ``` fences if the LLM ignored the rule about raw markdown.
 _FENCE_OPEN = re.compile(r"^\s*```[a-zA-Z0-9_-]*\s*\n")
 _FENCE_CLOSE = re.compile(r"\n\s*```\s*$")
 _REQUIRED_HEADERS = ("# Test Plan:", "## Feature Summary", "## Test Cases", "## Out of Scope")
@@ -39,7 +39,7 @@ class PlanResult:
 
 
 def plan_feature(description: str, *, model: Optional[str] = None) -> PlanResult:
-    """Ask Claude (with the test-design skill loaded) for a test plan."""
+    """Ask the configured LLM (with the test-design skill loaded) for a test plan."""
     description = description.strip()
     if not description:
         raise ValueError("feature description is empty")
@@ -52,7 +52,7 @@ def plan_feature(description: str, *, model: Optional[str] = None) -> PlanResult
         f"FEATURE:\n{description}"
     )
 
-    result = ask_claude(system=system, user=user, model=model)
+    result = ask_llm(system=system, user=user, model=model)
     markdown = _normalise_markdown(result.text)
     _validate_markdown(markdown)
 

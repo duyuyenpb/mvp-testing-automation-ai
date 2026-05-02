@@ -6,20 +6,20 @@ First public alpha. The full **plan → generate → run → heal** loop works e
 
 ### Commands
 
-- **`qaforge plan "<feature>"`** — Claude turns a plain-English description into a Markdown test plan (TC-001, TC-002, ...) with happy paths, negatives, edge cases, and a UI/API/Hybrid label per case. Interactive y/n/edit approval, or `--auto` to skip the prompt. Reads from `--file requirements.txt` for longer specs.
-- **`qaforge generate --plan <file>`** — Claude reads the plan + the `write-test` SKILL + the gold-standard saucedemo examples, then emits one spec at `tests/specs/test_<slug>.py` plus any new page objects under `tests/pages/`. Validates paths (regex), `python -m py_compile`s every file (1 retry on syntax errors), then runs `pytest --collect-only` + the spec once. Strict path validation — Claude can never write outside `tests/`.
-- **`qaforge run [paths...]`** — Wraps `pytest --junit-xml`, parses results into a structured `RunResult`. Prints `N passed, M failed in T s` plus per-failure brief, and writes `test-results/qaforge-report.html`. Detects environmental issues (missing Playwright browser, missing `anthropic` package) and emits an actionable hint.
-- **`qaforge heal [--auto] [--max-attempts N]`** — Reads the first failure, sends Claude the full spec + every page object the spec imports + the traceback. Claude returns a JSON patch (using the `heal-test` SKILL). Default flow shows a unified diff and asks before applying; `--auto` skips the prompt. Loops until green or attempts exhausted. Returns `{"files": []}` when the failure is a real bug instead of inverting the assertion.
+- **`qaforge plan "<feature>"`** — The configured LLM turns a plain-English description into a Markdown test plan (TC-001, TC-002, ...) with happy paths, negatives, edge cases, and a UI/API/Hybrid label per case. Interactive y/n/edit approval, or `--auto` to skip the prompt. Reads from `--file requirements.txt` for longer specs.
+- **`qaforge generate --plan <file>`** — The configured LLM reads the plan + the `write-test` SKILL + the gold-standard saucedemo examples, then emits one spec at `tests/specs/test_<slug>.py` plus any new page objects under `tests/pages/`. Validates paths (regex), `python -m py_compile`s every file (1 retry on syntax errors), then runs `pytest --collect-only` + the spec once. Strict path validation — the LLM can never write outside `tests/`.
+- **`qaforge run [paths...]`** — Wraps `pytest --junit-xml`, parses results into a structured `RunResult`. Prints `N passed, M failed in T s` plus per-failure brief, and writes `test-results/qaforge-report.html`. Detects common environment issues and emits an actionable hint.
+- **`qaforge heal [--auto] [--max-attempts N]`** — Reads the first failure, sends the configured LLM the full spec + every page object the spec imports + the traceback. The LLM returns a JSON patch (using the `heal-test` SKILL). Default flow shows a unified diff and asks before applying; `--auto` skips the prompt. Loops until green or attempts exhausted. Returns `{"files": []}` when the failure is a real bug instead of inverting the assertion.
 - **`qaforge init <dir>`** — Scaffolds a fresh project: `knowledge.md`, all 3 SKILLs, templates, `conftest.py`, `.env.example`, gold-standard tests, `.github/workflows/test.yml`, `.gitignore`, `README.md`. Skips existing files unless `--force`.
 
 ### Foundation
 
-- Single LLM provider: Claude (`claude-sonnet-4-6` by default; configurable via `QAFORGE_MODEL` env var).
+- Configurable LLM provider: `anthropic`, `openai`, `codex`, `gemini`, or `openai-compatible`.
 - Runtime: Python ≥3.10, Playwright via `pytest-playwright`.
 - System prompt = `knowledge.md` + selected SKILLs, wrapped in XML delimiters.
 - `assistant_prefill` trick (`'{"files":'`) on every structured-output call → near-guaranteed JSON.
 - Path validation rejects anything outside `tests/specs/` and `tests/pages/`. Spec must match `tests/specs/test_<snake>.py`; page must match `tests/pages/<snake>_page.py`.
-- Exactly one spec per generation; page objects reused (existing list passed to Claude in user prompt so it imports instead of redefines).
+- Exactly one spec per generation; page objects reused (existing list passed to the configured LLM in user prompt so it imports instead of redefines).
 
 ### Tested against
 
@@ -27,7 +27,7 @@ First public alpha. The full **plan → generate → run → heal** loop works e
 
 ### Known limitations (v0.2 backlog)
 
-- No multi-LLM (OpenAI / Gemini) — `qaforge/llm.py` is single-provider on purpose.
+- Multi-provider routing is basic and env-driven; provider-specific tuning remains v0.2+.
 - No visual regression (`toHaveScreenshot()`).
 - No Swagger/OpenAPI import.
 - HTML reporting is intentionally simple: one self-contained latest-run report at `test-results/qaforge-report.html`.
@@ -54,7 +54,7 @@ cd mvp-testing-automation-ai
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e '.[test]'
 playwright install chromium
-cp .env.example .env  # add ANTHROPIC_API_KEY
+cp .env.example .env  # choose QAFORGE_LLM_PROVIDER and add the matching API key
 ```
 
 See [GETTING-STARTED.md](GETTING-STARTED.md) for the full walkthrough.

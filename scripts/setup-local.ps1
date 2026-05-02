@@ -130,7 +130,7 @@ else {
 if (-not (Test-Path ".env")) {
     Write-Step "Creating .env from .env.example"
     Copy-Item ".env.example" ".env"
-    Write-Host "Edit .env and add your ANTHROPIC_API_KEY before using plan/generate/heal." -ForegroundColor Yellow
+    Write-Host "Edit .env and configure QAFORGE_LLM_PROVIDER plus the matching API key before using plan/generate/heal." -ForegroundColor Yellow
 }
 else {
     Write-Host ".env already exists; leaving it unchanged." -ForegroundColor Yellow

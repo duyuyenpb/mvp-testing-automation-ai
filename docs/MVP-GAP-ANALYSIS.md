@@ -11,7 +11,7 @@ The repo is very close to the MVP plan. It implements the core loop:
 - `qaforge run`
 - `qaforge heal`
 
-It also includes the Week 6 `qaforge init` scaffold command, docs, CI, a license, Claude-only LLM integration, and saucedemo-based Playwright + Python examples.
+It also includes the Week 6 `qaforge init` scaffold command, docs, CI, a license, configurable LLM integration, and saucedemo-based Playwright + Python examples.
 
 The main difference is language/runtime: the plan's architecture diagram is TypeScript-shaped, but the plan text and current project use Python + pytest-playwright. The repo's `knowledge.md` explicitly locks Python, so this analysis treats Python as the intended implementation.
 
@@ -22,8 +22,8 @@ The main difference is language/runtime: the plan's architecture diagram is Type
 | CLI command: `plan` | Done | Supports inline descriptions, `--file`, `--auto`, and approval/edit flow. |
 | CLI command: `generate` | Done | Writes one spec plus page objects, validates paths, compiles, retries once, and can first-run pytest. |
 | CLI command: `run` | Done | Wraps pytest, parses JUnit XML, prints pass/fail summaries, and writes an HTML report. |
-| CLI command: `heal` | Done | Reads failures, asks Claude for minimal JSON patches, shows diffs, applies, and reruns. |
-| Single LLM provider: Claude | Done | `qaforge/llm.py` is Anthropic-only. |
+| CLI command: `heal` | Done | Reads failures, asks the configured LLM for minimal JSON patches, shows diffs, applies, and reruns. |
+| Configurable LLM provider | Done | `qaforge/llm.py` supports Anthropic, OpenAI/Codex, Gemini, and OpenAI-compatible APIs. |
 | Playwright + Python | Done | Uses `pytest-playwright` and synchronous Playwright API. |
 | One demo e-commerce app | Done | Locked to saucedemo.com in docs and fixtures. |
 | `knowledge.md` | Done | Contains project rules, stack, folder structure, boundaries. |
@@ -41,7 +41,7 @@ The main difference is language/runtime: the plan's architecture diagram is Type
 
 | Priority | Gap | Recommended next step |
 |---|---|---|
-| P0 | Local verification blocked in this workspace because `python` / `py` are not installed or not on PATH. | Install Python 3.10+ / 3.11+, then run `.\scripts\setup-local.ps1`. |
+| P0 | Local verification depends on a Python runtime. | Run `.\scripts\setup-local.ps1`; it can use system Python or uv-managed Python 3.11. |
 | P1 | Success criteria 3 and 4 need measured evidence, not just implementation. | Generate 5 plans, run generated specs, then manually break 10 locators and measure healer fixes. Record results in `CHANGELOG.md`. |
 | P1 | The plan says "stranger can follow README"; this has not been verified in a clean Windows setup. | Test the Getting Started flow in a fresh shell after installing Python and Playwright browsers. |
 | P2 | `setup_clean.py` is large and not part of the lean MVP architecture. | Keep it only if it is still useful; otherwise remove or document its purpose after confirming no one depends on it. |
@@ -50,7 +50,7 @@ The main difference is language/runtime: the plan's architecture diagram is Type
 
 1. Install Python 3.10+ and run `.\scripts\setup-local.ps1`.
 2. Run `.\scripts\verify-local.ps1` for no-API-key checks.
-3. Add `ANTHROPIC_API_KEY` to `.env`, then run `python -m qaforge plan "User login with email and password" --auto`.
+3. Configure `QAFORGE_LLM_PROVIDER`, `QAFORGE_MODEL`, and the matching API key in `.env`, then run `python -m qaforge plan "User login with email and password" --auto`.
 4. Run `python -m qaforge generate --plan test-plans/001-user-login.md --no-run` first to validate generation and compile.
 5. Run `.\scripts\verify-local.ps1 -Full` for browser-backed checks.
 6. Validate `heal` by breaking a locator in `tests/pages/login_page.py`, running `python -m qaforge heal`, and checking the diff.

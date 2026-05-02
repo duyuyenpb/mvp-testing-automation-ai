@@ -1,7 +1,7 @@
 """
 Auto-healer — Week 5.
 
-Reads failures from runner.RunResult, asks Claude for fixed code (using
+Reads failures from runner.RunResult, asks the configured LLM for fixed code (using
 the heal-test SKILL), shows a diff, optionally writes the patch, and
 re-runs the failing spec. Loops up to `max_attempts` times.
 
@@ -25,7 +25,7 @@ from qaforge.generator import (
     _write_files,
     SPEC_FILE_RE,
 )
-from qaforge.llm import ask_claude
+from qaforge.llm import ask_llm
 from qaforge.runner import RunResult, TestFailure, run_tests
 
 
@@ -73,7 +73,7 @@ def heal(
     model: Optional[str] = None,
 ) -> HealResult:
     """
-    Loop up to `max_attempts` times: pick the first failure, ask Claude to
+    Loop up to `max_attempts` times: pick the first failure, ask the configured LLM to
     fix it, apply the patch (with confirmation unless `auto`), re-run only
     the affected spec. Stop when all pass or attempts are exhausted.
     """
@@ -106,7 +106,7 @@ def heal(
             page_files=page_files,
         )
 
-        ask = ask_claude(
+        ask = ask_llm(
             user=user_prompt,
             system=system,
             model=model,

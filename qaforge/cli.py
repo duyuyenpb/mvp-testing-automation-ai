@@ -22,7 +22,7 @@ from qaforge.generator import GenerateResult, generate_from_plan
 from qaforge.healer import format_failure_brief, heal as run_heal
 from qaforge.initializer import init_project
 from qaforge.integration import run as integration_run
-from qaforge.llm import ask_claude
+from qaforge.llm import ask_llm
 from qaforge.planner import PlanResult, plan_feature, save_plan, slugify
 from qaforge.runner import diagnose_environment, format_summary, run_tests
 
@@ -76,10 +76,10 @@ def skills() -> None:
 @click.argument("question", nargs=-1, required=True)
 @click.option("-s", "--skill", "skills_filter", multiple=True, help="Restrict to specific skills")
 def ask(question: tuple[str, ...], skills_filter: tuple[str, ...]) -> None:
-    """Ask Claude a question with full project context loaded."""
+    """Ask the configured LLM a question with full project context loaded."""
     q = " ".join(question).strip()
     system = build_system_prompt(list(skills_filter) if skills_filter else None)
-    result = ask_claude(system=system, user=q)
+    result = ask_llm(system=system, user=q)
     click.echo(result.text)
     err.print(
         f"[dim][ask] model={result.model} in={result.input_tokens} out={result.output_tokens}[/dim]"
@@ -89,7 +89,7 @@ def ask(question: tuple[str, ...], skills_filter: tuple[str, ...]) -> None:
 @main.command()
 @click.argument("question", nargs=-1)
 def integration(question: tuple[str, ...]) -> None:
-    """Week 1 integration smoke: load context + ask Claude + assert project-aware."""
+    """Week 1 integration smoke: load context + ask the configured LLM + assert project-aware."""
     rc = integration_run(" ".join(question).strip() or None)
     sys.exit(rc)
 
@@ -122,7 +122,7 @@ def plan(
     """Generate a Markdown test plan from a feature DESCRIPTION (or --file)."""
     feature_text = _resolve_feature_text(description, from_file)
 
-    err.print("[dim][plan] asking Claude…[/dim]")
+    err.print("[dim][plan] asking configured LLM…[/dim]")
     try:
         result = plan_feature(feature_text)
     except ValueError as exc:
@@ -198,7 +198,7 @@ def plan(
 def generate(plan_path: Path, no_run: bool, no_retry: bool) -> None:
     """Test plan → test_*.py + page object files."""
     err.print(f"[dim][generate] reading plan: {plan_path}[/dim]")
-    err.print("[dim][generate] asking Claude…[/dim]")
+    err.print("[dim][generate] asking configured LLM…[/dim]")
     result: GenerateResult = generate_from_plan(
         plan_path,
         retry_on_compile_error=not no_retry,
@@ -292,7 +292,7 @@ def run(paths: tuple[str, ...], show_failures: bool) -> None:
     help="Maximum heal attempts before giving up.",
 )
 def heal(paths: tuple[str, ...], auto: bool, max_attempts: int) -> None:
-    """Run pytest, then ask Claude to heal failing tests (locator fixes, etc.)."""
+    """Run pytest, then ask the configured LLM to heal failing tests (locator fixes, etc.)."""
     target_paths = list(paths) if paths else None
     err.print("[dim][heal] running tests first…[/dim]")
     initial = run_tests(target_paths)
@@ -366,7 +366,7 @@ def init(target: Path, name: str, force: bool) -> None:
     err.print("")
     err.print(f"[green][init] {len(result.written)} files written, "
               f"{len(result.skipped)} skipped.[/green]")
-    err.print("[dim]next: cp .env.example .env  →  add ANTHROPIC_API_KEY  →  qaforge plan \"...\"[/dim]")
+    err.print("[dim]next: cp .env.example .env  →  configure QAFORGE_LLM_PROVIDER + API key  →  qaforge plan \"...\"[/dim]")
 
 
 # ----------------------- helpers -----------------------

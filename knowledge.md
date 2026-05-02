@@ -1,6 +1,6 @@
 # QAForge Project Knowledge
 
-> Loaded into every Claude prompt. Treat as authoritative project rules.
+> Loaded into every LLM prompt. Treat as authoritative project rules.
 > If a SKILL contradicts this file, this file wins.
 
 ## What QAForge is
@@ -11,7 +11,7 @@ An AI-driven test automation CLI. Given a feature description, it produces a Mar
 
 - **Language:** Python 3.10+. No JavaScript, no TypeScript, no other languages.
 - **Test framework:** Playwright via the `pytest-playwright` plugin. No Selenium, no unittest, no Cucumber. Use synchronous Playwright API (`Page`, `Locator`).
-- **LLM:** Anthropic Claude (`claude-sonnet-4-6`) via the `anthropic` Python SDK. No other providers.
+- **LLM:** Configurable through `QAFORGE_LLM_PROVIDER`. Supported providers: Anthropic, OpenAI/Codex, Gemini, and OpenAI-compatible APIs.
 - **CLI:** `click`.
 - **Browser:** Chromium only for MVP.
 - **Type hints:** required on every public function. `from __future__ import annotations` at the top of every module.
@@ -26,7 +26,7 @@ qaforge/
 ├── qaforge/                           ← Python package (CLI source)
 │   ├── __init__.py
 │   ├── cli.py        click entry
-│   ├── llm.py        anthropic client
+│   ├── llm.py        configurable LLM client
 │   ├── context.py    loads knowledge + skills
 │   ├── planner.py    feature → test plan
 │   ├── generator.py  plan → spec + page
@@ -112,7 +112,7 @@ A plan must include **at least one happy path, one negative case, and one edge c
 ## CLI behavior
 
 - All commands read `.env` (via `python-dotenv`) at startup.
-- If `ANTHROPIC_API_KEY` is missing, exit with code 1 and a friendly message telling the user to copy `.env.example`.
+- If the selected provider's API key is missing, exit with code 1 and a friendly message telling the user to copy `.env.example` and configure the matching key.
 - All commands print structured progress: `[plan]`, `[generate]`, `[run]`, `[heal]` prefixes.
 - Long LLM calls show a `… thinking` indicator (use `rich.status` or simple stderr).
 - Use `rich` for nicely formatted Markdown output in the terminal.

@@ -57,7 +57,7 @@ Bootstrapped with [QAForge](https://github.com/duyuyenpb/mvp-testing-automation-
 python3 -m venv .venv && source .venv/bin/activate
 pip install qaforge[test]   # or: pip install -e <path-to-qaforge> '[test]'
 playwright install chromium
-cp .env.example .env        # then put your ANTHROPIC_API_KEY in .env
+cp .env.example .env        # then choose QAFORGE_LLM_PROVIDER and add its API key
 ```
 
 ## Use
